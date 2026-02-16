@@ -23,6 +23,18 @@ function extractDOI(input) {
 }
 
 /**
+ * Validate that an ArrayBuffer contains a valid PDF file
+ * @param {ArrayBuffer} arrayBuffer - The buffer to validate
+ * @returns {boolean} - True if valid PDF, false otherwise
+ */
+function validatePdfSignature(arrayBuffer) {
+    const PDF_SIGNATURE_LENGTH = 5;
+    const header = new Uint8Array(arrayBuffer.slice(0, PDF_SIGNATURE_LENGTH));
+    const headerStr = String.fromCharCode(...header);
+    return headerStr.startsWith('%PDF-');
+}
+
+/**
  * Get PDF URL from DOI or direct URL
  */
 async function getPDFUrl(input) {
@@ -78,9 +90,7 @@ async function fetchPDF(url) {
         const arrayBuffer = await response.arrayBuffer();
         
         // Check for PDF header signature (%PDF-)
-        const header = new Uint8Array(arrayBuffer.slice(0, 5));
-        const headerStr = String.fromCharCode(...header);
-        if (!headerStr.startsWith('%PDF-')) {
+        if (!validatePdfSignature(arrayBuffer)) {
             throw new Error('The fetched content is not a valid PDF file. Please check the URL.');
         }
         
@@ -107,9 +117,7 @@ async function fetchPDF(url) {
                 const arrayBuffer = await response.arrayBuffer();
                 
                 // Validate PDF header for proxied content too
-                const header = new Uint8Array(arrayBuffer.slice(0, 5));
-                const headerStr = String.fromCharCode(...header);
-                if (!headerStr.startsWith('%PDF-')) {
+                if (!validatePdfSignature(arrayBuffer)) {
                     throw new Error('The fetched content is not a valid PDF file. The URL may point to an HTML page.');
                 }
                 
