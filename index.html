@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOI to Booklet Converter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 DOI to Booklet</h1>
+            <p class="subtitle">Convert open access papers into printable booklets</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <label for="doi-input">Enter DOI or Paper URL:</label>
+                <input 
+                    type="text" 
+                    id="doi-input" 
+                    placeholder="e.g., 10.1371/journal.pone.0154556 or full URL"
+                    aria-label="DOI or URL input"
+                >
+                <button id="convert-btn" onclick="convertToBooklet()">
+                    Convert to Booklet
+                </button>
+            </div>
+
+            <div id="status" class="status hidden"></div>
+            
+            <div id="progress" class="progress-container hidden">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="progress-text"></p>
+            </div>
+
+            <div class="info-section">
+                <h2>How it works</h2>
+                <ol>
+                    <li>Enter a DOI or URL of an open access paper</li>
+                    <li>The tool fetches the PDF from the publisher</li>
+                    <li>Pages are rearranged into booklet format (2-up layout)</li>
+                    <li>Download your printable booklet PDF</li>
+                </ol>
+                
+                <h3>Example DOI to try:</h3>
+                <code>10.1371/journal.pone.0154556</code>
+                <p class="note">
+                    <strong>Note:</strong> This tool works with open access papers.
+                    Due to CORS restrictions, some publishers may not allow direct PDF access.
+                </p>
+            </div>
+        </main>
+
+        <footer>
+            <p>
+                Open source project • 
+                <a href="https://github.com/lubianat/doi2booklet" target="_blank">View on GitHub</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Load PDF.js library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Load pdf-lib from CDN -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- Load our script -->
+    <script src="script.js"></script>
+</body>
+</html>
