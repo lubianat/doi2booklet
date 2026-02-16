@@ -66,7 +66,13 @@ async function fetchPDF(url) {
         return await response.arrayBuffer();
     } catch (error) {
         // If direct fetch fails due to CORS, try with a CORS proxy
-        // Note: In production, you'd want your own proxy or handle CORS properly
+        // WARNING: Using a third-party CORS proxy has security implications:
+        // - The proxy can access all PDF content being fetched
+        // - Service availability is not guaranteed
+        // For production use, consider:
+        // - Self-hosted CORS proxy
+        // - Server-side PDF fetching
+        // - Direct publisher API integration
         try {
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
             const response = await fetch(proxyUrl);
@@ -122,7 +128,6 @@ async function createBooklet(pdfBytes) {
         // Draw left page
         if (leftPageNum < pageCount) {
             const leftPage = copiedPages[leftPageNum];
-            const leftDims = leftPage.getSize();
             newPage.drawPage(leftPage, {
                 x: 0,
                 y: 0,
@@ -134,7 +139,6 @@ async function createBooklet(pdfBytes) {
         // Draw right page
         if (rightPageNum < pageCount) {
             const rightPage = copiedPages[rightPageNum];
-            const rightDims = rightPage.getSize();
             newPage.drawPage(rightPage, {
                 x: pageWidth,
                 y: 0,
