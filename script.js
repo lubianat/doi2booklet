@@ -98,13 +98,8 @@ async function createBooklet(pdfBytes) {
     // Create new document for booklet
     const bookletDoc = await PDFLib.PDFDocument.create();
     
-    // Get all pages
-    const pages = await bookletDoc.copyPages(pdfDoc, [...Array(pageCount).keys()]);
-    
-    // Add blank pages if needed
-    for (let i = 0; i < blankPages; i++) {
-        const blankPage = bookletDoc.addPage([612, 792]); // Standard letter size
-    }
+    // Copy all pages from original document
+    const copiedPages = await bookletDoc.copyPages(pdfDoc, [...Array(pageCount).keys()]);
     
     // Calculate booklet page order
     // For a booklet, pages are arranged: [n, 1, 2, n-1, n-2, 3, 4, n-3, ...]
@@ -112,35 +107,39 @@ async function createBooklet(pdfBytes) {
     
     updateProgress(50, 'Arranging pages in booklet format...');
     
+    // Get dimensions from first page or use standard letter size
+    const firstPage = pdfDoc.getPage(0);
+    const { width: pageWidth, height: pageHeight } = firstPage.getSize();
+    
     // Create booklet pages (2-up layout)
     for (let i = 0; i < bookletOrder.length; i += 2) {
         const leftPageNum = bookletOrder[i];
         const rightPageNum = bookletOrder[i + 1];
         
         // Create a new landscape page (2x width)
-        const newPage = bookletDoc.addPage([792 * 2, 612]); // Landscape, double width
+        const newPage = bookletDoc.addPage([pageWidth * 2, pageHeight]);
         
-        // Embed left page
+        // Draw left page
         if (leftPageNum < pageCount) {
-            const leftPage = pages[leftPageNum];
-            const [leftEmbed] = await bookletDoc.embedPages([leftPage]);
-            newPage.drawPage(leftEmbed, {
+            const leftPage = copiedPages[leftPageNum];
+            const leftDims = leftPage.getSize();
+            newPage.drawPage(leftPage, {
                 x: 0,
                 y: 0,
-                width: 792,
-                height: 612
+                width: pageWidth,
+                height: pageHeight
             });
         }
         
-        // Embed right page
+        // Draw right page
         if (rightPageNum < pageCount) {
-            const rightPage = pages[rightPageNum];
-            const [rightEmbed] = await bookletDoc.embedPages([rightPage]);
-            newPage.drawPage(rightEmbed, {
-                x: 792,
+            const rightPage = copiedPages[rightPageNum];
+            const rightDims = rightPage.getSize();
+            newPage.drawPage(rightPage, {
+                x: pageWidth,
                 y: 0,
-                width: 792,
-                height: 612
+                width: pageWidth,
+                height: pageHeight
             });
         }
     }
