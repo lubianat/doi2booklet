@@ -13,37 +13,43 @@
 
 **Expected Result:**
 - Progress bar appears
-- Status messages show: "Resolving DOI...", "Fetching PDF...", "Processing pages...", etc.
+- Status messages show: "Resolving URL...", "Fetching PDF...", "Processing pages...", etc.
 - A booklet PDF downloads automatically
 - Success message appears
 
-#### 2. Test with DOI
+#### 2. Test with DOI (Should Fail)
 **Input:** `10.1371/journal.pone.0154556`
 
 **Expected Result:**
-- Similar to above
-- DOI is resolved to PDF URL
-- Booklet is created and downloaded
+- Error message: "DOI detected, but automatic DOI-to-PDF resolution is not supported. Please provide a direct PDF URL (e.g., from PubMed Central, bioRxiv, or publisher site)."
+- No download occurs
 
-#### 3. Test with DOI URL
+#### 3. Test with DOI URL (Should Fail)
 **Input:** `https://doi.org/10.1371/journal.pone.0154556`
 
 **Expected Result:**
-- DOI is extracted from URL
-- Booklet is created and downloaded
-
-#### 4. Test Error Handling - Invalid Input
-**Input:** `not-a-valid-doi`
-
-**Expected Result:**
-- Error message: "Invalid DOI format. Please enter a valid DOI or PDF URL."
+- Error message: "DOI detected, but automatic DOI-to-PDF resolution is not supported. Please provide a direct PDF URL (e.g., from PubMed Central, bioRxiv, or publisher site)."
 - No download occurs
 
-#### 5. Test Error Handling - Non-existent DOI
-**Input:** `10.1234/nonexistent`
+#### 4. Test Error Handling - Invalid Input
+**Input:** `not-a-valid-url`
 
 **Expected Result:**
-- Appropriate error message about failed PDF fetch
+- Error message: "Invalid input. Please enter a direct PDF URL."
+- No download occurs
+
+#### 5. Test Error Handling - Non-PDF URL
+**Input:** `https://example.com/page.html`
+
+**Expected Result:**
+- Error message about expected PDF but received different content type
+- No download occurs
+
+#### 6. Test Error Handling - Non-existent PDF
+**Input:** `https://pmc.ncbi.nlm.nih.gov/articles/PMC99999999/pdf/nonexistent.pdf`
+
+**Expected Result:**
+- HTTP error message (404 or similar)
 - No download occurs
 
 ### Visual Checks
@@ -84,17 +90,23 @@ After downloading a booklet PDF:
 
 ## Known Limitations
 
-1. **CORS Restrictions:**
-   - Some publishers may block direct PDF access
-   - The CORS proxy is a workaround with security implications
+1. **No DOI Resolution:**
+   - Automatic DOI-to-PDF resolution is not supported
+   - Users must provide direct PDF URLs
+   - DOI resolvers often return HTML landing pages instead of PDFs
    
-2. **Open Access Only:**
+2. **CORS Restrictions:**
+   - Some publishers may block direct PDF access
+   - The CORS proxy fallback is a workaround with security implications
+   - PDF content may be routed through third-party proxy (corsproxy.io)
+   
+3. **Open Access Only:**
    - Tool works best with freely accessible PDFs
    - Paywalled content won't be accessible
 
-3. **Browser Compatibility:**
+4. **Browser Compatibility:**
    - Requires modern browser with ES6+ support
-   - PDF.js and pdf-lib must be supported
+   - pdf-lib library must be supported
 
 ## Automated Testing
 

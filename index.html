@@ -15,41 +15,41 @@
 
         <main>
             <div class="input-section">
-                <label for="doi-input">Enter DOI or Paper URL:</label>
+                <label for="doi-input">Enter PDF URL:</label>
                 <input 
                     type="text" 
                     id="doi-input" 
-                    placeholder="e.g., 10.1371/journal.pone.0154556 or full URL"
-                    aria-label="DOI or URL input"
+                    placeholder="e.g., https://pmc.ncbi.nlm.nih.gov/.../file.pdf"
+                    aria-label="PDF URL input"
                 >
                 <button id="convert-btn" onclick="convertToBooklet()">
                     Convert to Booklet
                 </button>
             </div>
 
-            <div id="status" class="status hidden"></div>
+            <div id="status" class="status hidden" role="status" aria-live="polite"></div>
             
             <div id="progress" class="progress-container hidden">
                 <div class="progress-bar">
                     <div id="progress-fill" class="progress-fill"></div>
                 </div>
-                <p id="progress-text"></p>
+                <p id="progress-text" role="status" aria-live="polite"></p>
             </div>
 
             <div class="info-section">
                 <h2>How it works</h2>
                 <ol>
-                    <li>Enter a DOI or URL of an open access paper</li>
-                    <li>The tool fetches the PDF from the publisher</li>
+                    <li>Enter a direct PDF URL of an open access paper</li>
+                    <li>The tool fetches the PDF from the URL</li>
                     <li>Pages are rearranged into booklet format (2-up layout)</li>
                     <li>Download your printable booklet PDF</li>
                 </ol>
                 
-                <h3>Example DOI to try:</h3>
-                <code>10.1371/journal.pone.0154556</code>
+                <h3>Example PDF URL to try:</h3>
+                <code>https://pmc.ncbi.nlm.nih.gov/articles/PMC4851331/pdf/pone.0154556.pdf</code>
                 <p class="note">
-                    <strong>Note:</strong> This tool works with open access papers.
-                    Due to CORS restrictions, some publishers may not allow direct PDF access.
+                    <strong>Note:</strong> This tool requires a direct link to a PDF file.
+                    DOI-to-PDF resolution is not supported. Due to CORS restrictions, some publishers may not allow direct PDF access, and requests may be routed through a third-party proxy.
                 </p>
             </div>
         </main>
@@ -57,18 +57,11 @@
         <footer>
             <p>
                 Open source project • 
-                <a href="https://github.com/lubianat/doi2booklet" target="_blank">View on GitHub</a>
+                <a href="https://github.com/lubianat/doi2booklet" target="_blank" rel="noopener noreferrer">View on GitHub</a>
             </p>
         </footer>
     </div>
 
-    <!-- Load PDF.js library from CDN with integrity check -->
-    <script 
-        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
-        integrity="sha512-aHJIOL5EMz1ay3FxsbO3xvJLo5UJZxfbDV8YrNAKSX/K8bJCRX8FF3IYCKLlnWz/bYU3RGLyuPDH2qGC0cY0+w=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer">
-    </script>
     <!-- Load pdf-lib from CDN with integrity check -->
     <script 
         src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"

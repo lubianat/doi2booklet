@@ -1,9 +1,6 @@
 // DOI to Booklet Converter
 // Main script for converting PDFs to printable booklet format
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
 /**
  * Extract DOI from various input formats
  */
@@ -49,19 +46,16 @@ async function getPDFUrl(input) {
     
     // Extract DOI
     const doi = extractDOI(input);
-    if (!doi) {
-        throw new Error('Invalid DOI format. Please enter a valid DOI or PDF URL.');
+    if (doi) {
+        // NOTE: Automatic DOI → PDF resolution is not implemented here because
+        // many DOI resolvers (e.g. https://doi.org) return HTML landing pages
+        // rather than direct PDF files, which would cause failures later when
+        // trying to parse the response as a PDF. To avoid this, we currently
+        // require the user to provide a direct PDF URL instead of a bare DOI.
+        throw new Error('DOI detected, but automatic DOI-to-PDF resolution is not supported. Please provide a direct PDF URL (e.g., from PubMed Central, bioRxiv, or publisher site).');
     }
     
-    // For now, we'll try common open access repositories
-    // This is a simple approach - production might use CrossRef API
-    const possibleUrls = [
-        `https://doi.org/${doi}`, // Will redirect to publisher
-        `https://www.biorxiv.org/content/${doi}v1.full.pdf`,
-        `https://europepmc.org/articles/PMC${doi.split('/').pop()}/pdf`
-    ];
-    
-    return possibleUrls[0]; // Start with DOI resolver
+    throw new Error('Invalid input. Please enter a direct PDF URL.');
 }
 
 /**
@@ -74,26 +68,59 @@ async function fetchPDF(url) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return await response.arrayBuffer();
-    } catch (error) {
-        // If direct fetch fails due to CORS, try with a CORS proxy
-        // WARNING: Using a third-party CORS proxy has security implications:
-        // - The proxy can access all PDF content being fetched
-        // - Service availability is not guaranteed
-        // For production use, consider:
-        // - Self-hosted CORS proxy
-        // - Server-side PDF fetching
-        // - Direct publisher API integration
-        try {
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-            const response = await fetch(proxyUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.arrayBuffer();
-        } catch (proxyError) {
-            throw new Error(`Failed to fetch PDF. This may be due to CORS restrictions or the PDF not being publicly accessible. Original error: ${error.message}`);
+        
+        // Validate that the response is actually a PDF
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.includes('application/pdf')) {
+            throw new Error(`Expected PDF but received ${contentType}. The URL may point to an HTML page instead of a PDF file.`);
         }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Check for PDF header signature (%PDF-)
+        const header = new Uint8Array(arrayBuffer.slice(0, 5));
+        const headerStr = String.fromCharCode(...header);
+        if (!headerStr.startsWith('%PDF-')) {
+            throw new Error('The fetched content is not a valid PDF file. Please check the URL.');
+        }
+        
+        return arrayBuffer;
+    } catch (error) {
+        // Only use CORS proxy for network/CORS failures (TypeError: Failed to fetch)
+        // Don't proxy for HTTP errors (404, 500, etc.) or invalid content
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            // If direct fetch fails due to CORS, try with a CORS proxy
+            // WARNING: Using a third-party CORS proxy has security implications:
+            // - The proxy can access all PDF content being fetched
+            // - Service availability is not guaranteed
+            // For production use, consider:
+            // - Self-hosted CORS proxy
+            // - Server-side PDF fetching
+            // - Direct publisher API integration
+            try {
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Validate PDF header for proxied content too
+                const header = new Uint8Array(arrayBuffer.slice(0, 5));
+                const headerStr = String.fromCharCode(...header);
+                if (!headerStr.startsWith('%PDF-')) {
+                    throw new Error('The fetched content is not a valid PDF file. The URL may point to an HTML page.');
+                }
+                
+                return arrayBuffer;
+            } catch (proxyError) {
+                throw new Error(`Failed to fetch PDF via proxy. This may be due to CORS restrictions or the PDF not being publicly accessible. Original error: ${error.message}`);
+            }
+        }
+        
+        // Re-throw non-CORS errors
+        throw error;
     }
 }
 
@@ -110,7 +137,11 @@ async function createBooklet(pdfBytes) {
     const pagesNeeded = Math.ceil(pageCount / 4) * 4;
     const blankPages = pagesNeeded - pageCount;
     
-    updateProgress(30, `Processing ${pageCount} pages...`);
+    const paddingInfo = blankPages > 0
+        ? ` (adding ${blankPages} blank page${blankPages === 1 ? '' : 's'} for booklet layout)`
+        : '';
+    
+    updateProgress(30, `Processing ${pageCount} pages...${paddingInfo}`);
     
     // Create new document for booklet
     const bookletDoc = await PDFLib.PDFDocument.create();
@@ -237,6 +268,7 @@ function downloadBooklet(pdfBytes, doi) {
 async function convertToBooklet() {
     const input = document.getElementById('doi-input').value;
     const convertBtn = document.getElementById('convert-btn');
+    const mainContainer = document.querySelector('main');
     
     if (!input.trim()) {
         showStatus('Please enter a DOI or PDF URL', 'error');
@@ -246,11 +278,12 @@ async function convertToBooklet() {
     try {
         // Disable button and show progress
         convertBtn.disabled = true;
+        mainContainer.setAttribute('aria-busy', 'true');
         hideStatus();
         updateProgress(0, 'Starting...');
         
         // Get PDF URL
-        updateProgress(10, 'Resolving DOI...');
+        updateProgress(10, 'Resolving URL...');
         const pdfUrl = await getPDFUrl(input);
         
         // Fetch PDF
@@ -278,14 +311,16 @@ async function convertToBooklet() {
         document.getElementById('progress').classList.add('hidden');
     } finally {
         convertBtn.disabled = false;
+        mainContainer.removeAttribute('aria-busy');
     }
 }
 
 // Allow Enter key to submit
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('doi-input');
-    input.addEventListener('keypress', (e) => {
+    input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
+            e.preventDefault();
             convertToBooklet();
         }
     });
