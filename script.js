@@ -31,9 +31,20 @@ function extractDOI(input) {
 async function getPDFUrl(input) {
     input = input.trim();
     
-    // If it's already a PDF URL, return it
-    if (input.includes('.pdf') || input.includes('pmc.ncbi.nlm.nih.gov')) {
-        return input;
+    // If it's already a PDF URL, validate and return it
+    if (input.includes('.pdf')) {
+        // Validate that it's a proper URL
+        try {
+            const url = new URL(input);
+            // Check for trusted domains (PMC)
+            if (url.hostname === 'pmc.ncbi.nlm.nih.gov' || url.hostname === 'www.ncbi.nlm.nih.gov') {
+                return input;
+            }
+            // For other domains, return as-is (user responsibility)
+            return input;
+        } catch (e) {
+            throw new Error('Invalid URL format.');
+        }
     }
     
     // Extract DOI

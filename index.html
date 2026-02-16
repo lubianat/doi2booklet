@@ -62,10 +62,19 @@
         </footer>
     </div>
 
-    <!-- Load PDF.js library from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Load pdf-lib from CDN -->
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- Load PDF.js library from CDN with integrity check -->
+    <script 
+        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+        integrity="sha512-aHJIOL5EMz1ay3FxsbO3xvJLo5UJZxfbDV8YrNAKSX/K8bJCRX8FF3IYCKLlnWz/bYU3RGLyuPDH2qGC0cY0+w=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer">
+    </script>
+    <!-- Load pdf-lib from CDN with integrity check -->
+    <script 
+        src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"
+        integrity="sha512-jJHOKr2wnN1+BUmVGJVIvA+TS4cY0XW8H3KoJTT62xDfkBfQfCrz8UNkYajfDQFhxL5a+yNJqHtXuXUFfGGGzQ=="
+        crossorigin="anonymous">
+    </script>
     <!-- Load our script -->
     <script src="script.js"></script>
 </body>
