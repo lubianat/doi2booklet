@@ -98,8 +98,16 @@ async function fetchPDF(url) {
     } catch (error) {
         // Only use CORS proxy for network/CORS failures (TypeError)
         // This includes both fetch failures and errors reading the response body due to CORS
+        // Check for CORS-related keywords to avoid false positives
         // Don't proxy for HTTP errors (404, 500, etc.) or invalid content
-        if (error instanceof TypeError) {
+        const isCorsError = error instanceof TypeError && (
+            error.message.toLowerCase().includes('fetch') ||
+            error.message.toLowerCase().includes('cors') ||
+            error.message.toLowerCase().includes('network') ||
+            error.message.toLowerCase().includes('response')
+        );
+        
+        if (isCorsError) {
             // If direct fetch fails due to CORS, try with a CORS proxy
             // WARNING: Using a third-party CORS proxy has security implications:
             // - The proxy can access all PDF content being fetched
