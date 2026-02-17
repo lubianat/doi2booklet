@@ -1,27 +1,23 @@
-# 📚 DOI to Booklet
+# 📚 PDF to Booklet
 
-Convert open access scientific papers into printable booklets for easy reading and note-taking.
+Convert PDF documents into printable booklets for easy reading and note-taking.
 
 ## 🌟 Features
 
-- **Simple Input**: Just paste a direct PDF URL
-- **Client-Side Processing**: PDF manipulation happens in your browser
+- **Simple Upload**: Just select a PDF file from your device
+- **Client-Side Processing**: PDF manipulation happens in your browser - no uploads to servers
 - **Printable Format**: Automatically arranges pages in booklet format (2-up layout)
+- **Private & Secure**: Your PDF never leaves your device
 - **Free & Open Source**: No sign-up, no costs, fully open source
 
 ## 🚀 Usage
 
 Visit the live app: **[https://lubianat.github.io/doi2booklet/](https://lubianat.github.io/doi2booklet/)**
 
-1. Enter a direct PDF URL (e.g., from PubMed Central, bioRxiv, or publisher site)
+1. Click "Choose File" and select a PDF from your device
 2. Click "Convert to Booklet"
 3. Wait for processing (PDF manipulation happens in your browser)
 4. Download your printable booklet PDF
-
-### Example PDF URLs to try:
-- Direct URL: `https://pmc.ncbi.nlm.nih.gov/articles/PMC4851331/pdf/pone.0154556.pdf`
-
-**Note:** DOI-to-PDF resolution is not currently supported. Please provide direct PDF URLs.
 
 ## 📖 How It Works
 
@@ -36,11 +32,16 @@ The tool rearranges PDF pages into booklet format:
 - **pdf-lib**: PDF manipulation and generation
 - **GitHub Pages**: Free hosting
 
-## 📝 Notes
+## 🔒 Privacy
 
-- Works best with open access papers (no paywalls)
-- Some publishers may have CORS restrictions
-- **Privacy:** PDF manipulation happens locally in your browser. However, PDFs are fetched from external sources (publisher websites), and if direct access fails due to CORS, the app may route requests through a third-party CORS proxy (corsproxy.io), which can access the PDF content being fetched.
+All processing happens locally in your browser. Your PDF is never uploaded to any server.
+
+## 📝 Printing Instructions
+
+1. Download the booklet PDF
+2. Print double-sided (flip on short edge)
+3. Fold the printed sheets in the middle
+4. Staple along the fold (optional)
 
 ## 🤝 Contributing
 

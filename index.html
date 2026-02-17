@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DOI to Booklet Converter</title>
+    <title>PDF to Booklet Converter</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📚 DOI to Booklet</h1>
-            <p class="subtitle">Convert open access papers into printable booklets</p>
+            <h1>📚 PDF to Booklet</h1>
+            <p class="subtitle">Convert PDFs into printable booklets</p>
         </header>
 
         <main>
             <div class="input-section">
-                <label for="doi-input">Enter PDF URL:</label>
+                <label for="pdf-upload">Upload PDF File:</label>
                 <input 
-                    type="text" 
-                    id="doi-input" 
-                    placeholder="e.g., https://pmc.ncbi.nlm.nih.gov/.../file.pdf"
-                    aria-label="PDF URL input"
+                    type="file" 
+                    id="pdf-upload" 
+                    accept="application/pdf,.pdf"
+                    aria-label="PDF file upload"
                 >
                 <button id="convert-btn" onclick="convertToBooklet()">
                     Convert to Booklet
@@ -39,17 +39,13 @@
             <div class="info-section">
                 <h2>How it works</h2>
                 <ol>
-                    <li>Enter a direct PDF URL of an open access paper</li>
-                    <li>The tool fetches the PDF from the URL</li>
+                    <li>Upload a PDF file from your device</li>
                     <li>Pages are rearranged into booklet format (2-up layout)</li>
                     <li>Download your printable booklet PDF</li>
                 </ol>
                 
-                <h3>Example PDF URL to try:</h3>
-                <code>https://pmc.ncbi.nlm.nih.gov/articles/PMC4851331/pdf/pone.0154556.pdf</code>
                 <p class="note">
-                    <strong>Note:</strong> This tool requires a direct link to a PDF file.
-                    DOI-to-PDF resolution is not supported. Due to CORS restrictions, some publishers may not allow direct PDF access, and requests may be routed through a third-party proxy.
+                    <strong>Privacy Note:</strong> All processing happens locally in your browser. Your PDF is never uploaded to any server.
                 </p>
             </div>
         </main>

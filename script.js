@@ -1,26 +1,5 @@
-// DOI to Booklet Converter
-// Main script for converting PDFs to printable booklet format
-
-/**
- * Extract DOI from various input formats
- */
-function extractDOI(input) {
-    input = input.trim();
-    
-    // Check if it's already a clean DOI
-    const doiPattern = /^10\.\d{4,}\/[^\s]+$/;
-    if (doiPattern.test(input)) {
-        return input;
-    }
-    
-    // Extract DOI from URL patterns
-    const doiMatch = input.match(/10\.\d{4,}\/[^\s?&#]+/);
-    if (doiMatch) {
-        return doiMatch[0];
-    }
-    
-    return null;
-}
+// PDF to Booklet Converter
+// Main script for converting uploaded PDFs to printable booklet format
 
 /**
  * Validate that an ArrayBuffer contains a valid PDF file
@@ -32,104 +11,6 @@ function validatePdfSignature(arrayBuffer) {
     const header = new Uint8Array(arrayBuffer.slice(0, PDF_SIGNATURE_LENGTH));
     const headerStr = String.fromCharCode(...header);
     return headerStr.startsWith('%PDF-');
-}
-
-/**
- * Get PDF URL from DOI or direct URL
- */
-async function getPDFUrl(input) {
-    input = input.trim();
-    
-    // If it's already a PDF URL, validate and return it
-    if (input.includes('.pdf')) {
-        // Validate that it's a proper URL
-        try {
-            const url = new URL(input);
-            // Check for trusted domains (PMC)
-            if (url.hostname === 'pmc.ncbi.nlm.nih.gov' || url.hostname === 'www.ncbi.nlm.nih.gov') {
-                return input;
-            }
-            // For other domains, return as-is (user responsibility)
-            return input;
-        } catch (e) {
-            throw new Error('Invalid URL format.');
-        }
-    }
-    
-    // Extract DOI
-    const doi = extractDOI(input);
-    if (doi) {
-        // NOTE: Automatic DOI → PDF resolution is not implemented here because
-        // many DOI resolvers (e.g. https://doi.org) return HTML landing pages
-        // rather than direct PDF files, which would cause failures later when
-        // trying to parse the response as a PDF. To avoid this, we currently
-        // require the user to provide a direct PDF URL instead of a bare DOI.
-        throw new Error('DOI detected, but automatic DOI-to-PDF resolution is not supported. Please provide a direct PDF URL (e.g., from PubMed Central, bioRxiv, or publisher site).');
-    }
-    
-    throw new Error('Invalid input. Please enter a direct PDF URL.');
-}
-
-/**
- * Fetch PDF as ArrayBuffer with CORS proxy if needed
- */
-async function fetchPDF(url) {
-    try {
-        // Try direct fetch first
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        // Validate that the response is actually a PDF
-        const contentType = response.headers.get('content-type');
-        if (contentType && !contentType.includes('application/pdf')) {
-            throw new Error(`Expected PDF but received ${contentType}. The URL may point to an HTML page instead of a PDF file.`);
-        }
-        
-        const arrayBuffer = await response.arrayBuffer();
-        
-        // Check for PDF header signature (%PDF-)
-        if (!validatePdfSignature(arrayBuffer)) {
-            throw new Error('The fetched content is not a valid PDF file. Please check the URL.');
-        }
-        
-        return arrayBuffer;
-    } catch (error) {
-        // Only use CORS proxy for network/CORS failures (TypeError: Failed to fetch)
-        // Don't proxy for HTTP errors (404, 500, etc.) or invalid content
-        if (error instanceof TypeError && error.message.includes('fetch')) {
-            // If direct fetch fails due to CORS, try with a CORS proxy
-            // WARNING: Using a third-party CORS proxy has security implications:
-            // - The proxy can access all PDF content being fetched
-            // - Service availability is not guaranteed
-            // For production use, consider:
-            // - Self-hosted CORS proxy
-            // - Server-side PDF fetching
-            // - Direct publisher API integration
-            try {
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                const response = await fetch(proxyUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const arrayBuffer = await response.arrayBuffer();
-                
-                // Validate PDF header for proxied content too
-                if (!validatePdfSignature(arrayBuffer)) {
-                    throw new Error('The fetched content is not a valid PDF file. The URL may point to an HTML page.');
-                }
-                
-                return arrayBuffer;
-            } catch (proxyError) {
-                throw new Error(`Failed to fetch PDF via proxy. This may be due to CORS restrictions or the PDF not being publicly accessible. Original error: ${error.message}`);
-            }
-        }
-        
-        // Re-throw non-CORS errors
-        throw error;
-    }
 }
 
 /**
@@ -258,12 +139,12 @@ function hideStatus() {
 /**
  * Download the booklet PDF
  */
-function downloadBooklet(pdfBytes, doi) {
+function downloadBooklet(pdfBytes, filename) {
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `booklet-${doi.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
+    a.download = `booklet-${filename}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -274,12 +155,20 @@ function downloadBooklet(pdfBytes, doi) {
  * Main conversion function
  */
 async function convertToBooklet() {
-    const input = document.getElementById('doi-input').value;
+    const fileInput = document.getElementById('pdf-upload');
     const convertBtn = document.getElementById('convert-btn');
     const mainContainer = document.querySelector('main');
     
-    if (!input.trim()) {
-        showStatus('Please enter a DOI or PDF URL', 'error');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showStatus('Please select a PDF file', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    // Validate file type
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        showStatus('Please select a valid PDF file', 'error');
         return;
     }
     
@@ -290,21 +179,23 @@ async function convertToBooklet() {
         hideStatus();
         updateProgress(0, 'Starting...');
         
-        // Get PDF URL
-        updateProgress(10, 'Resolving URL...');
-        const pdfUrl = await getPDFUrl(input);
+        // Read file
+        updateProgress(10, 'Reading PDF file...');
+        const arrayBuffer = await file.arrayBuffer();
         
-        // Fetch PDF
-        updateProgress(20, 'Fetching PDF...');
-        const pdfBytes = await fetchPDF(pdfUrl);
+        // Validate PDF signature
+        if (!validatePdfSignature(arrayBuffer)) {
+            throw new Error('The selected file is not a valid PDF.');
+        }
         
         // Create booklet
-        const bookletBytes = await createBooklet(pdfBytes);
+        updateProgress(20, 'Processing PDF...');
+        const bookletBytes = await createBooklet(arrayBuffer);
         
         // Download
         updateProgress(100, 'Done! Downloading...');
-        const doi = extractDOI(input) || 'paper';
-        downloadBooklet(bookletBytes, doi);
+        const filename = file.name.replace(/\.pdf$/i, '') + '.pdf';
+        downloadBooklet(bookletBytes, filename);
         
         showStatus('Booklet created successfully! Check your downloads.', 'success');
         
@@ -323,13 +214,11 @@ async function convertToBooklet() {
     }
 }
 
-// Allow Enter key to submit
+// Handle file selection changes
 document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('doi-input');
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            convertToBooklet();
-        }
+    const fileInput = document.getElementById('pdf-upload');
+    fileInput.addEventListener('change', () => {
+        // Clear any previous status messages when a new file is selected
+        hideStatus();
     });
 });
