@@ -104,7 +104,8 @@ async function fetchPDF(url) {
             error.message.toLowerCase().includes('fetch') ||
             error.message.toLowerCase().includes('cors') ||
             error.message.toLowerCase().includes('network') ||
-            error.message.toLowerCase().includes('response')
+            error.message.toLowerCase().includes('load') ||
+            error.message.toLowerCase().includes('request')
         );
         
         if (isCorsError) {
