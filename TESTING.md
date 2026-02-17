@@ -14,7 +14,7 @@
 **Expected Result:**
 - Progress bar appears
 - Status messages show: "Reading PDF file...", "Processing PDF...", "Processing X pages...", etc.
-- A booklet PDF downloads automatically with "-booklet-" prefix
+- A booklet PDF downloads automatically with "booklet-" prefix
 - Success message appears
 - Original filename is preserved in download
 
