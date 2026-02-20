@@ -159,6 +159,12 @@ async function convertToBooklet() {
     const convertBtn = document.getElementById('convert-btn');
     const mainContainer = document.querySelector('main');
     
+    // Check if PDFLib is loaded
+    if (typeof PDFLib === 'undefined') {
+        showStatus('PDF library failed to load. Please check your internet connection or ad blocker settings and refresh the page.', 'error');
+        return;
+    }
+    
     if (!fileInput.files || fileInput.files.length === 0) {
         showStatus('Please select a PDF file', 'error');
         return;
@@ -221,4 +227,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear any previous status messages when a new file is selected
         hideStatus();
     });
+    
+    // Check if PDFLib loaded successfully
+    setTimeout(() => {
+        if (typeof PDFLib === 'undefined') {
+            showStatus('Warning: PDF library failed to load. Please check your internet connection or ad blocker settings and refresh the page.', 'error');
+            const convertBtn = document.getElementById('convert-btn');
+            convertBtn.disabled = true;
+        }
+    }, 2000); // Wait 2 seconds for scripts to load
 });
