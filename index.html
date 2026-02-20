@@ -58,11 +58,22 @@
         </footer>
     </div>
 
+    <!-- Fallback CDN loader -->
+    <script>
+        function loadFallbackPDFLib() {
+            console.warn('Primary CDN failed, loading from fallback CDN');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+            script.crossOrigin = 'anonymous';
+            document.head.appendChild(script);
+        }
+    </script>
     <!-- Load pdf-lib from CDN with integrity check -->
     <script 
         src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"
         integrity="sha512-jJHOKr2wnN1+BUmVGJVIvA+TS4cY0XW8H3KoJTT62xDfkBfQfCrz8UNkYajfDQFhxL5a+yNJqHtXuXUFfGGGzQ=="
-        crossorigin="anonymous">
+        crossorigin="anonymous"
+        onerror="loadFallbackPDFLib()">
     </script>
     <!-- Load our script -->
     <script src="script.js"></script>

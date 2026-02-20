@@ -1,6 +1,10 @@
 // PDF to Booklet Converter
 // Main script for converting uploaded PDFs to printable booklet format
 
+// Constants
+const PDFLIB_LOAD_ERROR_MESSAGE = 'PDF library failed to load. Please check your internet connection or ad blocker settings and refresh the page.';
+const PDFLIB_LOAD_TIMEOUT_MS = 2000; // Wait 2 seconds for CDN scripts to load
+
 /**
  * Validate that an ArrayBuffer contains a valid PDF file
  * @param {ArrayBuffer} arrayBuffer - The buffer to validate
@@ -159,6 +163,12 @@ async function convertToBooklet() {
     const convertBtn = document.getElementById('convert-btn');
     const mainContainer = document.querySelector('main');
     
+    // Check if PDFLib is loaded
+    if (typeof PDFLib === 'undefined') {
+        showStatus(PDFLIB_LOAD_ERROR_MESSAGE, 'error');
+        return;
+    }
+    
     if (!fileInput.files || fileInput.files.length === 0) {
         showStatus('Please select a PDF file', 'error');
         return;
@@ -221,4 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear any previous status messages when a new file is selected
         hideStatus();
     });
+    
+    // Check if PDFLib loaded successfully after allowing time for CDN to load
+    setTimeout(() => {
+        if (typeof PDFLib === 'undefined') {
+            showStatus(`Warning: ${PDFLIB_LOAD_ERROR_MESSAGE}`, 'error');
+            const convertBtn = document.getElementById('convert-btn');
+            convertBtn.disabled = true;
+        }
+    }, PDFLIB_LOAD_TIMEOUT_MS);
 });
